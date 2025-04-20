@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  api:
+    image: profgabrielramos/inalabapi:latest
+    container_name: inalabapi
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./downloads:/app/downloads
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8001
+      - API_DEBUG=False
+      - API_BASE_URL=https://dou.proframos.com
+      - DOU_BASE_URL=https://www.in.gov.br
+      - DOU_DOWNLOAD_PATH=/app/downloads
+      - CACHE_ENABLED=True
+      - CACHE_TTL=3600
+      - LOG_LEVEL=INFO
+      - LOG_FILE=app.log
+      - CORS_ORIGINS=https://dou.proframos.com
+      - RATE_LIMIT=100
+    networks:
+      - ZeBookNet
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.inalabapi.rule=Host(`dou.proframos.com`)"
+      - "traefik.http.routers.inalabapi.entrypoints=websecure"
+      - "traefik.http.routers.inalabapi.tls=true"
+      - "traefik.http.services.inalabapi.loadbalancer.server.port=8001"
+
+networks:
+  ZeBookNet:
+    external: true
+    name: ZeBookNet 
