@@ -1,8 +1,14 @@
 from datetime import date
 import requests
+import os
+from dotenv import load_dotenv
 
-login = "gabrielgfcramos@outlook.com"
-senha = "senfit-7xeqpi-tegWef"
+# Carrega variáveis de ambiente
+load_dotenv()
+
+# Credenciais do DOU
+login = os.getenv("DOU_LOGIN")
+senha = os.getenv("DOU_PASSWORD")
 
 tipo_dou="DO1 DO2 DO3 DO1E DO2E DO3E" # Seções separadas por espaço
 # Opções DO1 DO2 DO3 DO1E DO2E DO3E

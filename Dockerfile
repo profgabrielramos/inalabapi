@@ -1,5 +1,5 @@
 # Use uma imagem base oficial do Python
-FROM python:3.11-slim
+FROM --platform=linux/amd64 python:3.11-slim
 
 # Define variáveis de ambiente
 ENV PYTHONUNBUFFERED=1 \
