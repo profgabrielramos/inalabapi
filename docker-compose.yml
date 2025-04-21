@@ -7,23 +7,33 @@ services:
     restart: unless-stopped
     ports:
       - "8001:8001"
-    volumes:
-      - ./downloads:/app/downloads
     environment:
       - API_HOST=0.0.0.0
       - API_PORT=8001
-      - API_DEBUG=False
       - API_BASE_URL=https://dou.proframos.com
       - DOU_BASE_URL=https://www.in.gov.br
-      - DOU_DOWNLOAD_PATH=/app/downloads
-      - CACHE_ENABLED=True
+      - DOU_TIMEOUT=30
       - CACHE_TTL=3600
+      - CACHE_DIR=/app/.cache
       - LOG_LEVEL=INFO
-      - LOG_FILE=app.log
-      - CORS_ORIGINS=https://dou.proframos.com
-      - RATE_LIMIT=100
+      - LOG_FILE=/app/api.log
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+      - OTEL_SERVICE_NAME=inalabapi
+      - OTEL_SERVICE_VERSION=1.0.0
+    volumes:
+      - ./.cache:/app/.cache
     networks:
+      - inalabapi-network
       - ZeBookNet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.inalabapi.rule=Host(`dou.proframos.com`)"
@@ -31,7 +41,40 @@ services:
       - "traefik.http.routers.inalabapi.tls=true"
       - "traefik.http.services.inalabapi.loadbalancer.server.port=8001"
 
+  redis:
+    image: redis:7-alpine
+    container_name: inalabapi-redis
+    restart: unless-stopped
+    networks:
+      - inalabapi-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: inalabapi-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    networks:
+      - inalabapi-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 networks:
+  inalabapi-network:
+    name: inalabapi-network
   ZeBookNet:
     external: true
-    name: ZeBookNet 
+
+volumes:
+  redis-data: 
